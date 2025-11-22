@@ -1,65 +1,46 @@
 package com.example.clientapp.adapter;
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.clientapp.R;
 import com.example.clientapp.model.NewsItem;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * NewsAdapter 支持单双列混合排版 + 下拉刷新动画
- * 优化：下拉刷新时显示旋转动画（非卡片内容）
- */
+/** * NewsAdapter 支持单双列混合排版 + 下拉刷新动画 * 优化：下拉刷新时显示旋转动画（非卡片内容） */
 public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder> {
-
     // ===== 布局类型常量 =====
-    public static final int CARD_TYPE_SINGLE = 0;  // 单列布局
+    public static final int CARD_TYPE_SINGLE = 0; // 单列布局
     public static final int CARD_TYPE_DOUBLE = 1; // 双列布局
-    public static final int CARD_TYPE_REFRESH = 2; // 刷新动画
 
-    // ===== 新增：刷新状态管理 =====
-    private boolean isRefreshing = false;
+    public boolean isLastPage;
 
-    // ===== 新增：刷新动画 ViewHolder =====
-    public static class RefreshViewHolder extends NewsViewHolder {
-        ProgressBar progressBar;
-
-        public RefreshViewHolder(View itemView) {
-            super(itemView);
-            progressBar = itemView.findViewById(R.id.refresh_progress);
-        }
-    }
-
-
-    private List<Integer> cardTypeList;
+    // ===== 新增：卡片删除事件监听器 =====
     public interface OnCardDeleteListener {
         void onCardDeleted(int position);
     }
+
+    private OnCardDeleteListener deleteListener;
+
     public void setOnCardDeleteListener(OnCardDeleteListener listener) {
         this.deleteListener = listener;
     }
+
     private List<NewsItem> newsList;
     private Context context;
-    private OnCardDeleteListener deleteListener;
+    private List<Integer> cardTypeList;
+
     public boolean isLoading = false;
-    public boolean isLastPage = false;
-    private final NewsItem loadingItem = new NewsItem("Loading...", "Loading more news...", 0);
 
     public NewsAdapter(Context context, List<NewsItem> newsList) {
         this.context = context;
         this.newsList = new ArrayList<>(newsList);
-        Collections.shuffle(this.newsList);
+        Collections.shuffle(this.newsList); // 初始化
 
         // 初始化 cardTypeList（保持原有逻辑）
         cardTypeList = new ArrayList<>(newsList.size());
@@ -73,25 +54,6 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         }
     }
 
-    // ===== 关键修改1：刷新状态处理 =====
-    public void setRefreshing(boolean refreshing) {
-        if (this.isRefreshing != refreshing) {
-            this.isRefreshing = refreshing;
-            // 仅刷新第一个位置（顶部动画）
-            notifyItemChanged(0);
-        }
-    }
-
-    // ===== 关键修改2：动态返回视图类型 =====
-    @Override
-    public int getItemViewType(int position) {
-        // 刷新状态时，第一个位置显示动画
-        if (isRefreshing && position == 0) {
-            return CARD_TYPE_REFRESH;
-        }
-        return cardTypeList.get(position);
-    }
-
     @Override
     public NewsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == CARD_TYPE_SINGLE) {
@@ -102,24 +64,12 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             return new DoubleViewHolder(
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type2, parent, false)
             );
-        } else if (viewType == CARD_TYPE_REFRESH) {
-            // 创建刷新动画布局
-            return new RefreshViewHolder(
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.refresh_layout, parent, false)
-            );
         }
         return null;
     }
 
     @Override
     public void onBindViewHolder(NewsViewHolder holder, int position) {
-        // ===== 关键修改3：刷新状态处理 =====
-        if (isRefreshing && position == 0) {
-            // 刷新动画：保持旋转状态
-            ((RefreshViewHolder) holder).progressBar.setVisibility(View.VISIBLE);
-            return;
-        }
-
         // 原有卡片绑定逻辑（保持不变）
         if (position == getItemCount() - 1 && isLoading) {
             // 上拉加载更多（保持不变）
@@ -128,7 +78,6 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             holder.newsImage.setVisibility(View.GONE);
             return;
         }
-
         if (holder instanceof SingleViewHolder) {
             bindSingleItem((SingleViewHolder) holder, position);
         } else if (holder instanceof DoubleViewHolder) {
@@ -141,7 +90,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         holder.newsTitle.setText(item.getTitle());
         holder.newsDescription.setText(item.getDescription());
         holder.newsImage.setImageResource(item.getImageResId());
-
+        // 长按删除（绑定到当前位置）
         holder.itemView.setOnLongClickListener(v -> {
             if (deleteListener != null) {
                 deleteListener.onCardDeleted(position);
@@ -154,8 +103,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         // 获取左项（当前位置）
         NewsItem leftItem = newsList.get(position);
         // 获取右项（当前位置+1，安全检查）
-        NewsItem rightItem = (position + 1 < newsList.size()) ?
-                newsList.get(position + 1) : null;
+        NewsItem rightItem = (position + 1 < newsList.size()) ? newsList.get(position + 1) : null;
 
         // 绑定左项
         holder.newsTitleLeft.setText(leftItem.getTitle());
@@ -217,14 +165,11 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     public void addMoreItems(List<NewsItem> newItems) {
         isLoading = true;
         notifyItemInserted(newsList.size());
-
         Collections.shuffle(newItems); // 确保新数据随机混合
-
         new android.os.Handler().postDelayed(() -> {
             // 添加新数据并更新cardTypeList
             int startIndex = newsList.size();
             newsList.addAll(newItems);
-
             // 为新增数据生成cardType
             for (int i = 0; i < newItems.size(); i++) {
                 int type = Math.random() < 0.3 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE;
@@ -236,7 +181,6 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
                     cardTypeList.set(i + 1, CARD_TYPE_SINGLE);
                 }
             }
-
             notifyItemRangeInserted(startIndex, newItems.size());
             isLoading = false;
         }, 1500);
@@ -300,14 +244,5 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
             newsDescriptionRight = itemView.findViewById(R.id.news_description_right);
             newsImageRight = itemView.findViewById(R.id.news_image_right);
         }
-    }
-
-    public void setLastPage(boolean lastPage) {
-        isLastPage = lastPage;
-    }
-
-    public void resetLoading() {
-        isLoading = false;
-        isLastPage = false;
     }
 }
