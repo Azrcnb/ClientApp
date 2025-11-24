@@ -162,37 +162,39 @@ public class MainActivity extends AppCompatActivity {
         int lastVisibleItem = layoutManager.findLastVisibleItemPosition();
         int totalItemCount = newsAdapter.getItemCount();
 
-        // 获取屏幕可见区域
-        Rect displayFrame = new Rect();
-        getWindow().getDecorView().getWindowVisibleDisplayFrame(displayFrame);
-        int screenHeight = displayFrame.height();
+        // ✅ 关键修复：使用 getLocationOnScreen 获取屏幕坐标
+        int[] recyclerViewLocation = new int[2];
+        RV.getLocationOnScreen(recyclerViewLocation);
+        int recyclerViewTop = recyclerViewLocation[1]; // 屏幕坐标（不是父容器坐标）
+        int recyclerViewBottom = recyclerViewLocation[1] + RV.getHeight(); // 屏幕坐标
 
         for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
             if (i >= totalItemCount) break;
 
-            View view = RV.getLayoutManager().findViewByPosition(i);
+            // 使用getChildAt替代findViewByPosition
+            int childIndex = i - firstVisibleItem;
+            if (childIndex < 0 || childIndex >= RV.getChildCount()) continue;
+            View view = RV.getChildAt(childIndex);
             if (view == null) continue;
 
             int[] location = new int[2];
             view.getLocationOnScreen(location);
-
             int viewTop = location[1];
             int viewBottom = viewTop + view.getHeight();
-            int visibleHeight = Math.max(0,
-                    Math.min(viewBottom, displayFrame.bottom) -
-                            Math.max(viewTop, displayFrame.top));
+
+            // 安全计算可见高度
+            int visibleTop = Math.max(viewTop, recyclerViewTop);
+            int visibleBottom = Math.min(viewBottom, recyclerViewBottom);
+            int visibleHeight = Math.max(0, visibleBottom - visibleTop);
 
             float visibilityRatio = (float) visibleHeight / view.getHeight();
 
+            // ✅ 正确写法：整数用 %d，浮点数用 %.2f（保留2位小数）
+            // String event = String.format("卡片 %d %d %d %d %d 露出率: %.2f", i,viewTop ,viewBottom, recyclerViewTop,recyclerViewBottom, visibilityRatio);
+            // exposureEvents.add(event);
+
             // 卡片露出
-            if (visibleHeight > 0 && !cardExposedStatus.getOrDefault(i, false)) {
-
-                if (i>=1) {
-                    String event0 = String.format("卡片消失: %d - %s", i-1, timeFormat.format(new java.util.Date()));
-                    exposureEvents.add(event0);
-                    cardExposedStatus.put(i-1, false);
-                }
-
+            if (visibilityRatio > 0.0f && !cardExposedStatus.getOrDefault(i, false)) {
                 String event = String.format("卡片露出: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardExposedStatus.put(i, true);
@@ -213,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             // 卡片消失
-            if (visibleHeight <= 0 && cardExposedStatus.getOrDefault(i, false)) {
+            if (visibilityRatio <= 0.1f && cardFullyExposedStatus.getOrDefault(i, false)) {
                 String event = String.format("卡片消失: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardExposedStatus.put(i, false);
