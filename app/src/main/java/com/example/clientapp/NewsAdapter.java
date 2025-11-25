@@ -1,13 +1,16 @@
-package com.example.clientapp.adapter;
+package com.example.clientapp;
+
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.recyclerview.widget.RecyclerView;
-import com.example.clientapp.R;
-import com.example.clientapp.model.NewsItem;
+
+import com.example.clientapp.NewsItem;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,18 +43,22 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     public NewsAdapter(Context context, List<NewsItem> newsList) {
         this.context = context;
         this.newsList = new ArrayList<>(newsList);
-        Collections.shuffle(this.newsList); // 初始化
 
         // 初始化 cardTypeList（保持原有逻辑）
         cardTypeList = new ArrayList<>(newsList.size());
         for (int i = 0; i < newsList.size(); i++) {
-            cardTypeList.add(Math.random() < 0.3 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE);
+            cardTypeList.add(Math.random() < 0.5 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE);
         }
         for (int i = 0; i < cardTypeList.size() - 1; i++) {
             if (cardTypeList.get(i) == CARD_TYPE_DOUBLE) {
                 cardTypeList.set(i + 1, CARD_TYPE_SINGLE);
             }
         }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return cardTypeList.get(position);
     }
 
     @Override
@@ -163,27 +170,23 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
     }
 
     public void addMoreItems(List<NewsItem> newItems) {
-        isLoading = true;
         notifyItemInserted(newsList.size());
         Collections.shuffle(newItems); // 确保新数据随机混合
-        new android.os.Handler().postDelayed(() -> {
-            // 添加新数据并更新cardTypeList
-            int startIndex = newsList.size();
-            newsList.addAll(newItems);
-            // 为新增数据生成cardType
-            for (int i = 0; i < newItems.size(); i++) {
-                int type = Math.random() < 0.3 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE;
-                cardTypeList.add(type);
+        // 添加新数据并更新cardTypeList
+        int startIndex = newsList.size();
+        newsList.addAll(newItems);
+        // 为新增数据生成cardType
+        for (int i = 0; i < newItems.size(); i++) {
+            int type = Math.random() < 0.3 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE;
+            cardTypeList.add(type);
+        }
+        // 修复新增数据的连续性
+        for (int i = startIndex; i < cardTypeList.size() - 1; i++) {
+            if (cardTypeList.get(i) == CARD_TYPE_DOUBLE) {
+                cardTypeList.set(i + 1, CARD_TYPE_SINGLE);
             }
-            // 修复新增数据的连续性
-            for (int i = startIndex; i < cardTypeList.size() - 1; i++) {
-                if (cardTypeList.get(i) == CARD_TYPE_DOUBLE) {
-                    cardTypeList.set(i + 1, CARD_TYPE_SINGLE);
-                }
-            }
-            notifyItemRangeInserted(startIndex, newItems.size());
-            isLoading = false;
-        }, 1500);
+        }
+        notifyItemRangeInserted(startIndex, newItems.size());
     }
 
     // ===== 新增：清空并添加新数据的方法 =====
@@ -193,19 +196,6 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.NewsViewHolder
         notifyDataSetChanged();
     }
 
-    public void addAll(List<NewsItem> items) {
-        newsList.addAll(items);
-        cardTypeList.clear();
-        for (int i = 0; i < items.size(); i++) {
-            cardTypeList.add(Math.random() < 0.3 ? CARD_TYPE_DOUBLE : CARD_TYPE_SINGLE);
-        }
-        for (int i = 0; i < cardTypeList.size() - 1; i++) {
-            if (cardTypeList.get(i) == CARD_TYPE_DOUBLE) {
-                cardTypeList.set(i + 1, CARD_TYPE_SINGLE);
-            }
-        }
-        notifyDataSetChanged();
-    }
 
     // ===== ViewHolder类（保持不变）=====
     public static abstract class NewsViewHolder extends RecyclerView.ViewHolder {

@@ -8,6 +8,8 @@ material = "1.10.0"
 activity = "1.8.0"
 constraintlayout = "2.1.4"
 recyclerview = "1.3.0"
+uiGeometry = "1.9.5"
+uiGeometryAndroid = "1.9.5"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -18,6 +20,8 @@ material = { group = "com.google.android.material", name = "material", version.r
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+ui-geometry = { group = "androidx.compose.ui", name = "ui-geometry", version.ref = "uiGeometry" }
+ui-geometry-android = { group = "androidx.compose.ui", name = "ui-geometry-android", version.ref = "uiGeometryAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

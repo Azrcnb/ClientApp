@@ -1,4 +1,4 @@
-package com.example.clientapp.model;
+package com.example.clientapp;
 
 public class NewsItem {
     private String title;

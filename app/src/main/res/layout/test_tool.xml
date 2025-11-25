@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TestToolActivity">
+
+    <!-- 仅保留卡片曝光日志内容 -->
+    <ScrollView
+        android:id="@+id/event_log_scrollview"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/event_log_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 卡片曝光事件日志标题 -->
+            <TextView
+                android:id="@+id/event_log_header"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="卡片曝光事件日志"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- 事件日志项 -->
+            <TextView
+                android:id="@+id/event_log_item"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F5F5F5"
+                android:padding="12dp"
+                android:text="卡片露出: 10:25:33"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/event_log_item2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F5F5F5"
+                android:padding="12dp"
+                android:text="卡片露出超过50%: 10:25:35"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/event_log_item3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F5F5F5"
+                android:padding="12dp"
+                android:text="卡片完整露出: 10:25:37"
+                android:textColor="#333333" />
+
+            <TextView
+                android:id="@+id/event_log_item4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#F5F5F5"
+                android:padding="12dp"
+                android:text="卡片消失: 10:25:40"
+                android:textColor="#333333" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
