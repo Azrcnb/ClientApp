@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import android.os.Handler;
-import com.example.clientapp.NewsItem;
 
 // MockServer类（独立于接口）
 public class MockServer {
+    public static final int CARD_TYPE_SINGLE = 0; // 单列布局
+    public static final int CARD_TYPE_DOUBLE = 1; // 双列布局
+    public static final int News_List_Size_Once = 5;
+
     /**
      * 模拟服务器数据请求，包含请求成功和失败两种情况
      * @param callback 请求完成后的回调
@@ -15,15 +18,15 @@ public class MockServer {
     public void fetchDataFromServer(ServerDataCallback callback) {
         // 模拟请求延迟时间（500ms-2000ms随机波动）
         final int delay = (int) (Math.random() * 1500 + 500);
-
         // 模拟请求成功概率（70%成功，30%失败）
-        boolean isSuccess = Math.random() < 0.7;
-
+        boolean isSuccess = Math.random() < 0.9;
         new Handler().postDelayed(() -> {
             if (isSuccess) {
                 // 请求成功，返回模拟数据
-                List<NewsItem> mockData = generateMockData();
-                callback.onSuccess(mockData);
+                List<NewsItem> mockNewsData = generateMockData();
+                List<NewsCardLayout> mockNewsCardLayoutData = generateNewsCardLayoutList(); // 生成CardLayout列表
+                String successMessage = "刷新成功";
+                callback.onSuccess(mockNewsData, mockNewsCardLayoutData, successMessage);
             } else {
                 // 请求失败，返回错误信息
                 String errorMessage = "网络请求失败，请检查网络连接";
@@ -38,7 +41,6 @@ public class MockServer {
      */
     private List<NewsItem> generateMockData() {
         List<NewsItem> mockData = new ArrayList<>();
-
         // 添加15条模拟新闻数据
         mockData.add(new NewsItem("江苏下雪了", "江苏多地下雪！气温暴跌7℃！接下来天气大反转", R.drawable.new1));
         mockData.add(new NewsItem("科技新动态", "苹果发布全新智能手表，支持健康监测", R.drawable.new2));
@@ -58,6 +60,37 @@ public class MockServer {
 
         // 随机选择5条新闻
         Collections.shuffle(mockData);
-        return new ArrayList<>(mockData.subList(0, 5));
+        return new ArrayList<>(mockData.subList(0, News_List_Size_Once));
+    }
+
+    /**
+     * 生成卡片布局信息列表（替代原有的generatecardTypeList）
+     * @return CardLayout对象列表，包含卡片类型和绑定的新闻索引
+     */
+    private List<NewsCardLayout> generateNewsCardLayoutList() {
+        List<NewsCardLayout> cardLayoutList = new ArrayList<>();
+        int currentNewsIndex = 0;
+
+        // 生成卡片布局，确保总新闻数等于5
+        while (currentNewsIndex < News_List_Size_Once) {
+            int type = Math.random() < 0.5 ? CARD_TYPE_SINGLE : CARD_TYPE_DOUBLE;
+
+            if (type == CARD_TYPE_SINGLE) {
+                cardLayoutList.add(new NewsCardLayout(CARD_TYPE_SINGLE, currentNewsIndex));
+                currentNewsIndex++;
+            } else { // CARD_TYPE_DOUBLE
+                // 确保不会越界
+                if (currentNewsIndex + 1 < News_List_Size_Once) {
+                    cardLayoutList.add(new NewsCardLayout(CARD_TYPE_DOUBLE, currentNewsIndex, currentNewsIndex + 1));
+                    currentNewsIndex += 2;
+                } else {
+                    // 如果只剩1条新闻，强制改为单列
+                    cardLayoutList.add(new NewsCardLayout(CARD_TYPE_SINGLE, currentNewsIndex));
+                    currentNewsIndex++;
+                }
+            }
+        }
+
+        return cardLayoutList;
     }
 }
