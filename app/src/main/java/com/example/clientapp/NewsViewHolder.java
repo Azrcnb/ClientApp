@@ -1,14 +1,14 @@
 package com.example.clientapp;
-
+import android.content.Context;
+import android.net.Uri;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.ImageView;
+import android.widget.VideoView;
 
-/**
- * 修复关键点：
- * 1. 必须显式调用 RecyclerView.ViewHolder 的构造 (super(itemView))
- * 2. 使用全限定类名避免IDE混淆
- */
+import com.example.clientapp.Model.NewsItem;
+
+/** * 修复关键点： * 1. 必须显式调用 RecyclerView.ViewHolder 的构造 (super(itemView)) * 2. 使用全限定类名避免IDE混淆 */
 public class NewsViewHolder extends androidx.recyclerview.widget.RecyclerView.ViewHolder {
     // 基础控件
     public TextView newsTitle;
@@ -44,6 +44,61 @@ public class NewsViewHolder extends androidx.recyclerview.widget.RecyclerView.Vi
             newsTitleRight = itemView.findViewById(R.id.news_title_right);
             newsDescriptionRight = itemView.findViewById(R.id.news_description_right);
             newsImageRight = itemView.findViewById(R.id.news_image_right);
+        }
+    }
+
+    public static class VideoViewHolder extends NewsViewHolder  { // 修改继承关系
+        ImageView videoCover; // 新增：用于封面
+        VideoView newsVideo;
+        Uri videoUri;
+        boolean isPlaying = false;
+        Context context;
+
+
+        public VideoViewHolder(View itemView,Context context) {
+            super(itemView);
+            this.context = context;
+            newsTitle = itemView.findViewById(R.id.news_title);
+            newsDescription = itemView.findViewById(R.id.news_description);
+            newsVideo = itemView.findViewById(R.id.news_video);
+            videoCover = itemView.findViewById(R.id.video_cover);
+
+
+
+            // 初始化VideoView
+            newsVideo.setOnPreparedListener(mp -> {
+                mp.setLooping(true);
+            });
+
+        }
+
+        public void loadVideoRes(NewsItem newsItem) {
+            if (newsItem.getVideoResId() == 0) return;
+            // 设置封面：使用新闻的图片作为视频封面
+            int coverImageResId = newsItem.getImageResId();
+            videoCover.setImageResource(coverImageResId);
+            this.videoUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + newsItem.getVideoResId());
+            newsVideo.setVideoURI(videoUri);
+            // 设置视频封面
+            // newsVideo.setVideoURI(Uri.parse("android.resource://" + context.getPackageName() + "/" + newsItem.getImageResId()));
+        }
+
+        public void playVideo() {
+            if (!isPlaying) {
+                newsVideo.start();
+                isPlaying = true;
+                // 关键修改：视频开始播放后隐藏封面
+                videoCover.setVisibility(View.GONE);
+            }
+        }
+
+        public void pauseVideo() {
+            if (isPlaying) {
+                newsVideo.pause();
+                isPlaying = false;
+                // 关键修改：视频暂停时重新显示封面
+                videoCover.setVisibility(View.VISIBLE);
+            }
         }
     }
 }

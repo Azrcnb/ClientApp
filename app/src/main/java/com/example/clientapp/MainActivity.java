@@ -11,6 +11,10 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.example.clientapp.ListenerManager.ExposureTracker;
+import com.example.clientapp.ListenerManager.UserInteractionListener;
+import com.example.clientapp.ListenerManager.ViewModelListener;
 import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 
@@ -19,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView RV;
     private NewsAdapter newsAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private ExposureTracker exposureTracker;
     private NewsViewModel newsViewModel;
 
     @Override

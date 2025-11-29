@@ -2,9 +2,12 @@ package com.example.clientapp;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.clientapp.Model.NewsCardLayout;
+import com.example.clientapp.Model.NewsItem;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +15,7 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsViewHolder> {
     // ===== 布局类型常量 =====
     public static final int CARD_TYPE_SINGLE = 0;
     public static final int CARD_TYPE_DOUBLE = 1;
+    public static final int CARD_TYPE_SINGLE_VIDEO = 2;
 
 
     private List<NewsItem> newsList;
@@ -26,20 +30,23 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsViewHolder> {
 
     @Override
     public int getItemViewType(int position) {
-        return cardLayoutList.get(position).getType();
+        int CARD_TYPE = cardLayoutList.get(position).getType();
+        int NewIndex = cardLayoutList.get(position).getLeftNewIndex();
+        int VideoResId = newsList.get(NewIndex).getVideoResId();
+        if (CARD_TYPE == CARD_TYPE_SINGLE && VideoResId != 0) CARD_TYPE = CARD_TYPE_SINGLE_VIDEO;
+        return CARD_TYPE;
     }
 
     @Override
-    public NewsViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if (viewType == CARD_TYPE_SINGLE) {
-            return new NewsViewHolder.SingleViewHolder(
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type1, parent, false)
-            );
-        } else {
-            return new NewsViewHolder.DoubleViewHolder(
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type2, parent, false)
-            );
+    public NewsViewHolder onCreateViewHolder(ViewGroup parent, int CARD_TYPE) {
+        if (CARD_TYPE == CARD_TYPE_SINGLE) {
+            return new NewsViewHolder.SingleViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type1, parent, false));
+        } else if (CARD_TYPE == CARD_TYPE_DOUBLE) {
+            return new NewsViewHolder.DoubleViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type2, parent, false));
+        } else if (CARD_TYPE == CARD_TYPE_SINGLE_VIDEO) {
+            return new NewsViewHolder.VideoViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.card_type3, parent, false), parent.getContext() );
         }
+        return null;
     }
 
     @Override
@@ -48,10 +55,18 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsViewHolder> {
             bindSingleItem((NewsViewHolder.SingleViewHolder) holder, position);
         } else if (holder instanceof NewsViewHolder.DoubleViewHolder) {
             bindDoubleItem((NewsViewHolder.DoubleViewHolder) holder, position);
+        } else if (holder instanceof NewsViewHolder.VideoViewHolder) {
+            bindVideoItem((NewsViewHolder.VideoViewHolder) holder, position);
         }
     }
 
     public void updateData(List<NewsItem> newData, List<NewsCardLayout> newCardTypeList) {
+        /*
+        int startIndex = newsList.size();
+        newsList.addAll(newData);
+        cardLayoutList.addAll(newCardTypeList);
+        notifyItemRangeInserted(startIndex, newData.size());
+         */
         this.newsList = newData;
         this.cardLayoutList = newCardTypeList;
         notifyDataSetChanged();
@@ -82,6 +97,14 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         holder.newsImageRight.setImageResource(rightItem.getImageResId());
     }
 
+    private void bindVideoItem(NewsViewHolder.VideoViewHolder holder, int position) {
+        int NewIndex = cardLayoutList.get(position).getLeftNewIndex();
+        NewsItem item = newsList.get(NewIndex);
+        holder.newsTitle.setText(item.getTitle());
+        holder.newsDescription.setText(item.getDescription());
+        //加载视频资源
+        holder.loadVideoRes(item);
+    }
 
     @Override
     public int getItemCount() {

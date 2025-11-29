@@ -3,6 +3,12 @@ package com.example.clientapp;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
+import com.example.clientapp.Model.MockServer;
+import com.example.clientapp.Model.NewsCardLayout;
+import com.example.clientapp.Model.NewsItem;
+import com.example.clientapp.Model.ServerDataCallback;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +50,7 @@ public class NewsViewModel extends ViewModel {
         mockServer.fetchDataFromServer(new ServerDataCallback() {
             @Override
             public void onSuccess(List<NewsItem> mockNewsData, List<NewsCardLayout> mockNewsCardLayoutData, String successMessage) {
-                // ✅ 关键修复：计算当前数据长度作为偏移量
+                // 计算当前数据长度作为偏移量
                 int offset = newsData.getValue().size();
 
                 // 创建副本以避免并发修改
@@ -141,7 +147,7 @@ public class NewsViewModel extends ViewModel {
             }
         }
 
-        // ✅ 关键修复：更新所有后续卡片的索引
+        // 更新所有后续卡片的索引
         for (int i = 0; i < currentCardLayoutData.size(); i++) {
             NewsCardLayout layout = currentCardLayoutData.get(i);
 
