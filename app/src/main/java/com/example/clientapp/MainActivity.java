@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import com.example.clientapp.ListenerManager.ExposureTracker;
 import com.example.clientapp.ListenerManager.UserInteractionListener;
 import com.example.clientapp.ListenerManager.ViewModelListener;
 import com.google.android.material.tabs.TabLayout;
@@ -55,6 +54,6 @@ public class MainActivity extends AppCompatActivity {
         new ViewModelListener(newsViewModel, newsAdapter, swipeRefreshLayout, this);
 
         // 初始化数据
-        newsViewModel.loadMoreNews();
+        newsViewModel.refreshNews();
     }
 }

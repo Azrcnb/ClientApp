@@ -60,16 +60,40 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsViewHolder> {
         }
     }
 
-    public void updateData(List<NewsItem> newData, List<NewsCardLayout> newCardTypeList) {
-        /*
+    // 新增 addMoreData 方法（用于加载更多）
+    public void addMoreData(List<NewsItem> newData, List<NewsCardLayout> newCardTypeList) {
         int startIndex = newsList.size();
         newsList.addAll(newData);
         cardLayoutList.addAll(newCardTypeList);
         notifyItemRangeInserted(startIndex, newData.size());
-         */
-        this.newsList = newData;
-        this.cardLayoutList = newCardTypeList;
+    }
+
+    // 新增 refreshData 方法（用于刷新）
+    public void refreshData(List<NewsItem> newData, List<NewsCardLayout> newCardTypeList) {
+        this.newsList = new ArrayList<>(newData);
+        this.cardLayoutList = new ArrayList<>(newCardTypeList);
         notifyDataSetChanged();
+    }
+
+    // 新增 removeNewsData 方法（用于删除，不修改数据，只更新UI）
+    // ✅ 新增 removeNewsData 方法 - 只更新受影响的卡片
+    public void removeNewsData(int position, List<NewsItem> newData, List<NewsCardLayout> newCardTypeList) {
+        // 2. 获取当前卡片类型
+        int cardType = this.cardLayoutList.get(position).getType();
+
+        // 1. 先用新数据替换当前数据
+        // this.newsList = new ArrayList<>(newData);
+        // this.cardLayoutList = new ArrayList<>(newCardTypeList);
+
+        // 3. 根据卡片类型和删除情况决定更新方式
+        if (cardType == CARD_TYPE_SINGLE) {
+            // 单列卡片：直接删除该位置
+            notifyItemRemoved(position);
+        } else if (cardType == CARD_TYPE_DOUBLE) {
+            // 双列卡片：只更新该位置（从双列变为单列）
+            notifyItemChanged(position);
+        }
+        int a =1;
     }
 
     private void bindSingleItem(NewsViewHolder.SingleViewHolder holder, int position) {

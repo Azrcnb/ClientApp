@@ -12,7 +12,7 @@ public class MockServer {
     public static final int CARD_TYPE_SINGLE = 0; // 单列布局
     public static final int CARD_TYPE_DOUBLE = 1; // 双列布局
     public static final int CARD_TYPE_VIDEO = 2;
-    public static final int News_List_Size_Once = 10;
+    public static final int News_List_Size_Once = 5;
 
     /**
      * 模拟服务器数据请求，包含请求成功和失败两种情况

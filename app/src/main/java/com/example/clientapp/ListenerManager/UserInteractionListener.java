@@ -8,12 +8,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.example.clientapp.Model.NewsCardLayout;
+import com.example.clientapp.Model.NewsItem;
 import com.example.clientapp.NewsAdapter;
 import com.example.clientapp.NewsViewModel;
 import com.example.clientapp.TestToolActivity;
 import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /** * 负责管理所有用户交互监听的类，使MainActivity保持简洁 */
 public class UserInteractionListener {
@@ -131,8 +134,11 @@ public class UserInteractionListener {
                                 .setPositiveButton("删除", (dialog, which) -> {
                                     // newsViewModel 删除数据
                                     newsViewModel.removeNews(Position, isLeftColumn);
-                                    // 刷新动画
-                                    newsAdapter.notifyItemRemoved(Position);
+                                    // 从newsViewModel中获取更新后的数据
+                                    List<NewsItem> updatedNewsData = newsViewModel.getCurrentNewsData();
+                                    List<NewsCardLayout> updatedCardLayoutData = newsViewModel.getCurrentCardLayoutData();
+                                    // 通知newsAdapter处理删除
+                                    newsAdapter.removeNewsData(Position, updatedNewsData, updatedCardLayoutData);
                                     Toast.makeText(context, "新闻已删除", Toast.LENGTH_SHORT).show();
                                 })
                                 .setNegativeButton("取消", null)
