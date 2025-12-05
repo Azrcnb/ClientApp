@@ -1,8 +1,6 @@
 package com.example.clientapp.Model;
 
 public class NewsCardLayout {
-    public static final int CARD_TYPE_SINGLE = 0; // 单列布局
-    public static final int CARD_TYPE_DOUBLE = 1; // 双列布局
 
     private int type;
     private int leftNewIndex; // 单列时：新闻索引；双列时：第一条新闻的索引

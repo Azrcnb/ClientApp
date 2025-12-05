@@ -1,10 +1,10 @@
 package com.example.clientapp.Model;
 
 public class NewsItem {
-    private String title;
-    private String description;
-    private int imageResId;
-    private int videoResId = 0; // 新增字段，默认值0
+    private final String title;
+    private final String description;
+    private final int imageResId;
+    private final int videoResId; // 新增字段，默认值0
 
     // 保留原有构造函数（使用默认videoResId=0）
     public NewsItem(String title, String description, int imageResId) {
