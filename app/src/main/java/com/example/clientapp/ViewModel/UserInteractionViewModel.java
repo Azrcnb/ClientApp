@@ -126,7 +126,7 @@ public class UserInteractionViewModel {
 
     private void setupDualColumnTouchListener() {
         recyclerView.addOnItemTouchListener(
-                new DualColumnTouchListener(
+                new TouchListener(
                         context,
                         recyclerView,
                         (Position, isLeftColumn) -> new AlertDialog.Builder(context)

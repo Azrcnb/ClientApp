@@ -14,6 +14,7 @@ public class MockServer {
     public static final int CARD_TYPE_SINGLE = 0; // 单列布局
     public static final int CARD_TYPE_DOUBLE = 1; // 双列布局
     public static final int News_List_Size_Once = 5;
+    public static final int CARD_TYPE_CUSTOM = 3;
 
     /**
      * 模拟服务器数据请求，包含请求成功和失败两种情况
@@ -79,10 +80,13 @@ public class MockServer {
 
         // 生成卡片布局，确保总新闻数等于5
         while (currentNewsIndex < News_List_Size_Once) {
-            int type = Math.random() < 0.5 ? CARD_TYPE_SINGLE : CARD_TYPE_DOUBLE;
-
-            if (type == CARD_TYPE_SINGLE) {
-                cardLayoutList.add(new NewsCardLayout(CARD_TYPE_SINGLE, currentNewsIndex));
+            if (Math.random() < 0.5) {
+                // 单列：10%概率为自定义卡片，90%为普通单列
+                if (Math.random() < 0.3) {
+                    cardLayoutList.add(new NewsCardLayout(CARD_TYPE_CUSTOM, currentNewsIndex));
+                } else {
+                    cardLayoutList.add(new NewsCardLayout(CARD_TYPE_SINGLE, currentNewsIndex));
+                }
                 currentNewsIndex++;
             } else { // CARD_TYPE_DOUBLE
                 // 确保不会越界

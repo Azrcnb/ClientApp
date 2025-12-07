@@ -1,37 +1,27 @@
 package com.example.clientapp.ViewModel;
 
+import android.annotation.SuppressLint;
 import android.view.View;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
-import com.example.clientapp.Adapter.NewsViewHolder;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.clientapp.Adapter.VideoCardViewHolder; // 添加导入
 
-/**
- * 专门处理卡片曝光事件跟踪的类
- * 负责检测卡片在RecyclerView中的可见性，并记录相应的曝光事件
- */
+/** * 专门处理卡片曝光事件跟踪的类 * 负责检测卡片在RecyclerView中的可见性，并记录相应的曝光事件 */
 public class ExposureTracker {
     private final Map<Integer, Boolean> cardExposedStatus = new HashMap<>();
     private final Map<Integer, Boolean> cardHalfExposedStatus = new HashMap<>();
     private final Map<Integer, Boolean> cardFullyExposedStatus = new HashMap<>();
     private final List<String> exposureEvents = new ArrayList<>();
+    @SuppressLint("SimpleDateFormat")
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
 
-
-    /**
-     * 检查RecyclerView中可见卡片的曝光状态
-     * @param recyclerView RecyclerView实例
-     * @param firstVisibleItem 第一个可见的item位置
-     * @param lastVisibleItem 最后一个可见的item位置
-     * @param totalItemCount 总item数量
-     */
+    /** * 检查RecyclerView中可见卡片的曝光状态 * @param recyclerView RecyclerView实例 * @param firstVisibleItem 第一个可见的item位置 * @param lastVisibleItem 最后一个可见的item位置 * @param totalItemCount 总item数量 */
     public void checkExposure(RecyclerView recyclerView, int firstVisibleItem, int lastVisibleItem, int totalItemCount) {
         // 如果RecyclerView没有布局管理器，直接返回
         LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
@@ -49,7 +39,6 @@ public class ExposureTracker {
         for (int i = firstVisibleItem; i <= lastVisibleItem; i++) {
             RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(i);
             if (viewHolder == null) continue;
-
             if (i >= totalItemCount) break;
 
             int childIndex = i - firstVisibleItem;
@@ -73,40 +62,36 @@ public class ExposureTracker {
             int visibleBottom = Math.min(viewBottom, recyclerViewBottom);
             int visibleHeight = Math.max(0, visibleBottom - visibleTop);
 
-
             // 计算可见比例
             float visibilityRatio = (float) visibleHeight / view.getHeight();
 
             // 检查并记录曝光事件
             if (visibilityRatio > 0.0f && Boolean.FALSE.equals(cardExposedStatus.getOrDefault(i, false))) {
-                String event = String.format("卡片露出: %d - %s", i, timeFormat.format(new java.util.Date()));
+                @SuppressLint("DefaultLocale") String event = String.format("卡片露出: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardExposedStatus.put(i, true);
             }
-
             if (visibilityRatio >= 0.5f && Boolean.FALSE.equals(cardHalfExposedStatus.getOrDefault(i, false))) {
-                String event = String.format("卡片露出超过50%%: %d - %s", i, timeFormat.format(new java.util.Date()));
+                @SuppressLint("DefaultLocale") String event = String.format("卡片露出超过50%%: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardHalfExposedStatus.put(i, true);
             }
-
             if (visibilityRatio >= 0.9f && Boolean.FALSE.equals(cardFullyExposedStatus.getOrDefault(i, false))) {
-                String event = String.format("卡片完整露出: %d - %s", i, timeFormat.format(new java.util.Date()));
+                @SuppressLint("DefaultLocale") String event = String.format("卡片完整露出: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardFullyExposedStatus.put(i, true);
             }
-
             if (visibilityRatio <= 0.2f && Boolean.TRUE.equals(cardFullyExposedStatus.getOrDefault(i, false))) {
-                String event = String.format("卡片消失: %d - %s", i, timeFormat.format(new java.util.Date()));
+                @SuppressLint("DefaultLocale") String event = String.format("卡片消失: %d - %s", i, timeFormat.format(new java.util.Date()));
                 exposureEvents.add(event);
                 cardExposedStatus.put(i, false);
                 cardHalfExposedStatus.put(i, false);
                 cardFullyExposedStatus.put(i, false);
             }
 
-            // ✅ 关键修改3：只有视频卡片才操作视频（单独处理）
-            if (viewHolder instanceof NewsViewHolder.VideoViewHolder) {
-                NewsViewHolder.VideoViewHolder videoHolder = (NewsViewHolder.VideoViewHolder) viewHolder;
+            // ✅ 关键修改：现在使用VideoCardViewHolder代替NewsViewHolder.VideoViewHolder
+            if (viewHolder instanceof VideoCardViewHolder) {
+                VideoCardViewHolder videoHolder = (VideoCardViewHolder) viewHolder;
                 if (visibilityRatio >= 0.9f) {
                     videoHolder.playVideo(); // 卡片露出50%以上才播放
                 } else if (visibilityRatio <= 0.5f) {
@@ -116,12 +101,8 @@ public class ExposureTracker {
         }
     }
 
-    /**
-     * 获取所有曝光事件
-     * @return 曝光事件列表
-     */
+    /** * 获取所有曝光事件 * @return 曝光事件列表 */
     public List<String> getExposureEvents() {
         return new ArrayList<>(exposureEvents);
     }
-
 }

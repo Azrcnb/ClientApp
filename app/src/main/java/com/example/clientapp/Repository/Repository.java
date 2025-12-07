@@ -3,6 +3,7 @@ package com.example.clientapp.Repository;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import android.content.Context;
 
 import com.example.clientapp.Adapter.NewsAdapter;
 import com.example.clientapp.Server.MockServer;
@@ -13,18 +14,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Repository extends ViewModel {
-    // 1. 新增 CardTypeData 的 LiveData（和 newsData 平等管理！）
+    // 声明CardTypeData 的 LiveData
     private final MutableLiveData<List<NewsCardLayout>> cardLayoutData = new MutableLiveData<>();
     private final MutableLiveData<List<NewsItem>> newsData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>();
     private final MutableLiveData<String> error = new MutableLiveData<>();
     private final MutableLiveData<String> updateType = new MutableLiveData<>();
 
-    // 2. 新增成员变量，用于保存所有新闻数据
+    // 声明currentNewsData和currentCardLayoutData，用于保存所有新闻数据
     private List<NewsItem> currentNewsData;
     private List<NewsCardLayout> currentCardLayoutData;
 
-    public Repository() {
+    // 缓存管理器
+    private final CacheManager cacheManager;
+
+    // 修改构造方法，接收 Context
+    public Repository(Context context) {
+        Context appContext = context.getApplicationContext();
+        this.cacheManager = new CacheManager(appContext);
+
         // 初始化数据（必须包含 CardTypeData）
         newsData.setValue(new ArrayList<>());
         cardLayoutData.setValue(new ArrayList<>());
@@ -33,9 +41,12 @@ public class Repository extends ViewModel {
         // 初始化成员变量
         currentNewsData = new ArrayList<>();
         currentCardLayoutData = new ArrayList<>();
+
+        // 首次创建 Repository 时尝试从缓存加载
+        loadFromCacheOnStart();
     }
 
-    // 2. 新增 CardTypeData 的访问接口（其他地方可直接调用！）
+    // CardTypeData 的访问接口
     public LiveData<List<NewsCardLayout>> getCardLayoutData() {
         return cardLayoutData;
     }
@@ -60,9 +71,26 @@ public class Repository extends ViewModel {
         return error;
     }
 
-    // 新增 getUpdateType 方法
+    // getUpdateType 方法
     public LiveData<String> getUpdateType() {
         return updateType;
+    }
+
+    // 启动时从缓存加载
+    private void loadFromCacheOnStart() {
+        CacheManager.CacheResult cacheResult = cacheManager.loadCache();
+        if (cacheResult != null) {
+            currentNewsData = new ArrayList<>(cacheResult.newsData);
+            currentCardLayoutData = new ArrayList<>(cacheResult.cardData);
+
+            // 更新LiveData
+            newsData.setValue(new ArrayList<>(currentNewsData));
+            cardLayoutData.setValue(new ArrayList<>(currentCardLayoutData));
+
+            // 设置更新类型
+            updateType.setValue("refresh");
+            error.setValue("正在使用缓存数据");
+        }
     }
 
     public void loadMoreNews() {
@@ -75,7 +103,7 @@ public class Repository extends ViewModel {
                 int offset = currentNewsData.size();
                 // 创建副本以避免并发修改
 
-                // ✅ 关键修复：更新 CardTypeData 索引（追加到现有数据）
+                // 更新 CardTypeData 索引（追加到现有数据）
                 List<NewsCardLayout> updatedCardLayoutData = new ArrayList<>();
                 for (NewsCardLayout layout : mockNewsCardLayoutData) {
                     if (layout.getType() == NewsAdapter.CARD_TYPE_SINGLE) {
@@ -93,19 +121,37 @@ public class Repository extends ViewModel {
                 currentNewsData.addAll(mockNewsData);
                 currentCardLayoutData.addAll(updatedCardLayoutData);
 
+                // 保存到缓存
+                cacheManager.saveCache(currentNewsData, currentCardLayoutData);
+
                 // 更新 LiveData
                 newsData.setValue(new ArrayList<>(mockNewsData));
                 cardLayoutData.setValue(new ArrayList<>(updatedCardLayoutData));
 
                 // 设置更新类型为"loadMore"
                 updateType.setValue("loadMore");
-
+                error.setValue("加载成功");
                 isLoading.setValue(false);
             }
 
             @Override
             public void onFailure(String errorMessage) {
-                error.setValue(errorMessage);
+                // 失败时检查缓存
+                CacheManager.CacheResult cacheResult = cacheManager.loadCache();
+                if (cacheResult != null) {
+                    // 使用缓存数据
+                    currentNewsData = new ArrayList<>(cacheResult.newsData);
+                    currentCardLayoutData = new ArrayList<>(cacheResult.cardData);
+
+                    newsData.setValue(new ArrayList<>(currentNewsData));
+                    cardLayoutData.setValue(new ArrayList<>(currentCardLayoutData));
+
+                    updateType.setValue("refresh");
+                    error.setValue("网络异常，已显示缓存内容");
+                } else {
+                    // 没有缓存才显示真正的错误
+                    error.setValue(errorMessage);
+                }
                 isLoading.setValue(false);
             }
         });
@@ -125,19 +171,37 @@ public class Repository extends ViewModel {
                 currentNewsData = new ArrayList<>(mockNewsData);
                 currentCardLayoutData = new ArrayList<>(mockCardTypeData);
 
+                // 保存到缓存
+                cacheManager.saveCache(currentNewsData, currentCardLayoutData);
+
                 // 更新 LiveData
                 newsData.setValue(new ArrayList<>(currentNewsData));
                 cardLayoutData.setValue(new ArrayList<>(currentCardLayoutData));
 
                 // 设置更新类型为"refresh"
                 updateType.setValue("refresh");
-
+                error.setValue("刷新成功"); // 清除错误信息
                 isLoading.setValue(false);
             }
 
             @Override
             public void onFailure(String errorMessage) {
-                error.setValue(errorMessage);
+                // 刷新失败时尝试使用缓存
+                CacheManager.CacheResult cacheResult = cacheManager.loadCache();
+                if (cacheResult != null) {
+                    // 使用缓存数据
+                    currentNewsData = new ArrayList<>(cacheResult.newsData);
+                    currentCardLayoutData = new ArrayList<>(cacheResult.cardData);
+
+                    newsData.setValue(new ArrayList<>(currentNewsData));
+                    cardLayoutData.setValue(new ArrayList<>(currentCardLayoutData));
+
+                    updateType.setValue("refresh");
+                    error.setValue("刷新失败，已显示缓存内容");
+                } else {
+                    // 没有缓存才显示真正的错误
+                    error.setValue(errorMessage);
+                }
                 isLoading.setValue(false);
             }
         });
@@ -145,7 +209,7 @@ public class Repository extends ViewModel {
 
     // 在 NewsViewModel.java 中添加以下方法
     public void removeNews(int position, boolean isLeftColumn) {
-        // 1️⃣ 创建深拷贝副本（关键：确保副本独立）
+        // 创建深拷贝副本（关键：确保副本独立）
         List<NewsItem> newNewsData = new ArrayList<>(currentNewsData);
         List<NewsCardLayout> newCardLayoutData = new ArrayList<>();
 
@@ -159,12 +223,12 @@ public class Repository extends ViewModel {
             newCardLayoutData.add(copy);
         }
 
-        // 2️⃣ 检查边界条件（在副本上操作）
+        // 检查边界条件（在副本上操作）
         if (position < 0 || position >= newCardLayoutData.size()) {
             return;
         }
 
-        // 3️⃣ 执行删除操作（在副本上）
+        // 执行删除操作（在副本上）
         int cardType = newCardLayoutData.get(position).getType();
         int deleteNewIndex = -1;
 
@@ -185,7 +249,7 @@ public class Repository extends ViewModel {
             newCardLayoutData.get(position).setRightNewIndex(-1);
         }
 
-        // 4️⃣ 更新后续卡片索引（在副本上）
+        // 更新后续卡片索引（在副本上）
         for (int i = 0; i < newCardLayoutData.size(); i++) {
             NewsCardLayout layout = newCardLayoutData.get(i);
             if (layout.getType() == NewsAdapter.CARD_TYPE_SINGLE) {
@@ -202,8 +266,11 @@ public class Repository extends ViewModel {
             }
         }
 
-        // 5️⃣ 将副本赋值给原始数据（关键步骤）
+        // 将副本赋值给原始数据（关键步骤）
         this.currentNewsData = newNewsData;
         this.currentCardLayoutData = newCardLayoutData;
+
+        // 删除新闻后更新缓存
+        cacheManager.saveCache(currentNewsData, currentCardLayoutData);
     }
 }
